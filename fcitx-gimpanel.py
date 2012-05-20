@@ -121,6 +121,9 @@ class LanguageBar(Gtk.Window):
 class GimPanel(Gtk.Window):
     def __init__(self, session_bus):
         Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
+        self.set_resizable(False)
+        self.set_border_width(6)
+        self.set_size_request(100, -1)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(hbox)
@@ -208,13 +211,17 @@ class GimPanel(Gtk.Window):
         if 'UpdatePreeditText' == kwargs['member']:
             self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % (args[0]))
         elif 'UpdateAux' == kwargs['member']:
-            self._aux_label.set_text(args[0])
+            self._aux_label.set_markup('<span color="blue">%s</span>' % (args[0]))
         elif 'UpdateLookupTable' == kwargs['member']:
             text = []
+            highlight_first = (len(args[0]) > 1)
             for i, index in enumerate(args[0]):
-                text.append("%s%s" % (index, args[1][i]))
+                if i == 0 and highlight_first:
+                    text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span> " % (index, args[1][i].strip()))
+                else:
+                    text.append("%s%s" % (index, args[1][i]))
 
-            self._lookup_label.set_text(''.join(text))
+            self._lookup_label.set_markup(''.join(text))
         elif 'ShowPreedit' == kwargs['member']:
             self._show_preedit = args[0]
             self._preedit_label.set_visible(self._show_preedit)
@@ -223,7 +230,6 @@ class GimPanel(Gtk.Window):
                 self._preedit_label.set_text('')
         elif 'ShowLookupTable' == kwargs['member']:
             self._show_lookup = args[0]
-            self._lookup_label.set_visible(self._show_lookup)
             if not self._show_lookup:
                 self._lookup_label.set_text('')
         elif 'ShowAux' == kwargs['member']:
