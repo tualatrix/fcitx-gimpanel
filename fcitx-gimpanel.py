@@ -120,26 +120,31 @@ class LanguageBar(Gtk.Window):
 
 class GimPanel(Gtk.Window):
     def __init__(self, session_bus):
-        GObject.GObject.__init__(self)
+        Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
 
-        self.set_default_size(100, 20)
-        self.set_keep_above(True)
-        self.set_type_hint(Gdk.WindowTypeHint.SPLASHSCREEN)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(hbox)
+
+        hbox.pack_start(Handle(), False, False, 0)
+
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
+                       spacing=3)
+        hbox.pack_start(vbox, True, True, 6)
 
         self._preedit_label = Gtk.Label()
         self._preedit_label.set_alignment(0, 0.5)
-        hbox.pack_start(self._preedit_label, False, False, 0)
+        vbox.pack_start(self._preedit_label, True, True, 0)
+
+        self._separator = Gtk.Separator()
+        vbox.pack_start(self._separator, False, False, 0)
 
         self._aux_label = Gtk.Label()
         self._aux_label.set_alignment(0, 0.5)
-        hbox.pack_start(self._aux_label, False, False, 0)
+        vbox.pack_start(self._aux_label, True, True, 0)
 
         self._lookup_label = Gtk.Label()
         self._lookup_label.set_alignment(0, 0.5)
-        hbox.pack_start(self._lookup_label, False, False, 0)
+        vbox.pack_start(self._lookup_label, True, True, 0)
 
         self._show_preedit = False
         self._show_lookup = False
@@ -201,7 +206,7 @@ class GimPanel(Gtk.Window):
     @log_func(log)
     def signal_handler(self, *args, **kwargs):
         if 'UpdatePreeditText' == kwargs['member']:
-            self._preedit_label.set_text(args[0])
+            self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % (args[0]))
         elif 'UpdateAux' == kwargs['member']:
             self._aux_label.set_text(args[0])
         elif 'UpdateLookupTable' == kwargs['member']:
@@ -212,9 +217,9 @@ class GimPanel(Gtk.Window):
             self._lookup_label.set_text(''.join(text))
         elif 'ShowPreedit' == kwargs['member']:
             self._show_preedit = args[0]
-            self._preedit_label.set_text('')
             self._preedit_label.set_visible(self._show_preedit)
-            if not self._preedit_label:
+            self._separator.set_visible(self._show_preedit)
+            if not self._show_preedit:
                 self._preedit_label.set_text('')
         elif 'ShowLookupTable' == kwargs['member']:
             self._show_lookup = args[0]
