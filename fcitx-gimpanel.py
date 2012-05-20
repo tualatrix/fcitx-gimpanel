@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 import logging
 
 import dbus
@@ -8,7 +9,9 @@ import dbus.mainloop.glib
 
 from gi.repository import Gtk, Gdk, Gio, GObject
 from gi.repository import AppIndicator3 as AppIndicator
+
 from debug import log_traceback, log_func
+from common import CONFIG_ROOT
 
 GObject.threads_init()
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -113,7 +116,6 @@ class LanguageBar(Gtk.Window):
         self._toolbar.insert(self._about_button, -1)
 
         self.add(self._toolbar)
-        self.show_all()
 
 
 class GimPanel(Gtk.Window):
@@ -153,9 +155,32 @@ class GimPanel(Gtk.Window):
         self.setup_indicator()
 
         self._languagebar = LanguageBar()
+        self._languagebar.connect('realize', self.on_realize)
         self._languagebar.show_all()
 
-        self.connect('destroy', Gtk.main_quit)
+        self.connect('destroy', self.on_gimpanel_exit)
+
+    def on_realize(self, widget):
+        try:
+            size = open(os.path.join(CONFIG_ROOT, 'gimpanel-state')).read().strip()
+            width, height = size.split()
+            log.debug("Set the window size to: %sx%s" % (width, height))
+            self._languagebar.move(int(width), int(height))
+        except Exception, e:
+            log_traceback(log)
+
+
+    @log_func(log)
+    def on_gimpanel_exit(self, widget):
+        try:
+            x, y = self._languagebar.get_position()
+            f = open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w')
+            f.write("%d %d" % (x, y))
+            f.close()
+        except Exception, e:
+            log_traceback(log)
+
+        Gtk.main_quit()
 
     def setup_indicator(self):
         self.appindicator = AppIndicator.Indicator.new('gimpanel',
@@ -166,7 +191,7 @@ class GimPanel(Gtk.Window):
 
         menu = Gtk.Menu()
         item = Gtk.MenuItem('Exit')
-        item.connect('activate', Gtk.main_quit)
+        item.connect('activate', self.on_gimpanel_exit)
 
         menu.append(item)
         menu.show_all()
