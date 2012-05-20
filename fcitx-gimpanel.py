@@ -1,15 +1,20 @@
 #!/usr/bin/python
 
+import logging
+
 import dbus
 import dbus.service
 import dbus.mainloop.glib
 
 from gi.repository import Gtk, Gdk, Gio, GObject
 from gi.repository import AppIndicator3 as AppIndicator
+from debug import log_traceback, log_func
 
 GObject.threads_init()
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 dbus.mainloop.glib.threads_init()
+
+log = logging.getLogger('GimPanel')
 
 
 class GimPanelController(dbus.service.Object):
@@ -24,9 +29,96 @@ class GimPanelController(dbus.service.Object):
         pass
 
 
+class Handle(Gtk.EventBox):
+    __gsignals__ = {
+        "move-begin": (GObject.SignalFlags.RUN_LAST, None, ()),
+        "move-end": (GObject.SignalFlags.RUN_LAST, None, ()),
+    }
+
+    def __init__ (self):
+        super(Handle, self).__init__()
+
+        self.set_visible_window(False)
+        self.set_size_request(10, -1)
+        self.set_events(Gdk.EventMask.EXPOSURE_MASK | \
+                        Gdk.EventMask.BUTTON_PRESS_MASK | \
+                        Gdk.EventMask.BUTTON_RELEASE_MASK | \
+                        Gdk.EventMask.BUTTON1_MOTION_MASK)
+
+        self._move_begined = False
+
+    def do_button_press_event(self, event):
+        if event.button == 1:
+            self._move_begined = True
+            toplevel = self.get_toplevel()
+            x, y = toplevel.get_position()
+            self._press_pos = event.x_root - x, event.y_root - y
+            self.get_parent_window().set_cursor(Gdk.Cursor.new(Gdk.CursorType.FLEUR))
+            self.emit("move-begin")
+            return True
+        return False
+
+    def do_button_release_event(self, event):
+        if event.button == 1:
+            self._move_begined = False
+            self.get_parent_window().set_cursor(Gdk.Cursor.new(Gdk.CursorType.LEFT_PTR))
+            self.emit("move-end")
+            return True
+
+        return False
+
+    def do_motion_notify_event(self, event):
+        if not self._move_begined:
+            return
+        toplevel = self.get_toplevel()
+        x, y = toplevel.get_position()
+        x  = int(event.x_root - self._press_pos[0])
+        y  = int(event.y_root - self._press_pos[1])
+
+        toplevel.move(x, y)
+
+    def do_draw(self, cr):
+        context = self.get_style_context()
+        context.save()
+        context.add_class(Gtk.STYLE_CLASS_SEPARATOR)
+
+        Gtk.render_handle(context,
+                          cr,
+                          0,
+                          0,
+                          self.get_allocation().width,
+                          self.get_allocation().height)
+        context.restore()
+
+        return False
+
+
+class LanguageBar(Gtk.Window):
+    def __init__(self):
+        GObject.GObject.__init__(self, type=Gtk.WindowType.POPUP)
+
+        self.set_border_width(5)
+
+        self._toolbar = Gtk.Toolbar()
+        self._toolbar.set_style(Gtk.ToolbarStyle.BOTH_HORIZ)
+        self._toolbar.set_show_arrow(False)
+        self._toolbar.set_icon_size(Gtk.IconSize.MENU)
+
+        self._handle = Gtk.ToolItem()
+        handle = Handle()
+        self._handle.add(handle)
+        self._toolbar.insert(self._handle, -1)
+
+        self._about_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ABOUT)
+        self._toolbar.insert(self._about_button, -1)
+
+        self.add(self._toolbar)
+        self.show_all()
+
+
 class GimPanel(Gtk.Window):
     def __init__(self, session_bus):
-        Gtk.Window.__init__(self)
+        GObject.GObject.__init__(self)
 
         self.set_default_size(100, 20)
         self.set_keep_above(True)
@@ -60,6 +152,9 @@ class GimPanel(Gtk.Window):
                                         member_keyword='member')
         self.setup_indicator()
 
+        self._languagebar = LanguageBar()
+        self._languagebar.show_all()
+
         self.connect('destroy', Gtk.main_quit)
 
     def setup_indicator(self):
@@ -78,9 +173,8 @@ class GimPanel(Gtk.Window):
 
         self.appindicator.set_menu(menu)
 
+    @log_func(log)
     def signal_handler(self, *args, **kwargs):
-        print "Caught signal: %s, %s\n" % (args, kwargs)
-
         if 'UpdatePreeditText' == kwargs['member']:
             self._preedit_label.set_text(args[0])
         elif 'UpdateAux' == kwargs['member']:
@@ -128,6 +222,9 @@ class GimPanel(Gtk.Window):
         Gtk.main()
 
 if __name__ == '__main__':
+    from debug import enable_debugging
+    enable_debugging()
+
     session_bus = dbus.SessionBus()
 
     gimpanel = GimPanel(session_bus)
