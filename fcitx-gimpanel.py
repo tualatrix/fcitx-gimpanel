@@ -21,9 +21,28 @@ log = logging.getLogger('GimPanel')
 
 
 class GimPanelController(dbus.service.Object):
-    def __init__(self, session_bus):
+    def __init__(self, session_bus, panel):
+        self._panel = panel
+
         bus_name = dbus.service.BusName('org.kde.impanel', bus=session_bus)
         dbus.service.Object.__init__(self, bus_name, '/org/kde/impanel')
+        session_bus.add_signal_receiver(self.signal_handler,
+                                        dbus_interface='org.kde.kimpanel.inputmethod',
+                                        member_keyword='member')
+
+    def signal_handler(self, *args, **kwargs):
+        signal_name = kwargs['member']
+
+        if hasattr(self._panel, signal_name):
+            getattr(self._panel, signal_name)(args)
+        else:
+            log.warning("Un-handle signal_name: %s" % signal_name)
+            for i, arg in enumerate(args):
+                log.warning("\targs-%d: %s" % (i + 1, arg))
+            for k, v in enumerate(kwargs):
+                log.warning("\tdict args-%d: %s: %s" % (k, v, kwargs[v]))
+
+        self._panel.do_visible_task()
 
     @dbus.service.signal('org.kde.impanel')
     def PanelCreated(self):
@@ -155,11 +174,8 @@ class GimPanel(Gtk.Window):
         self._cursor_x = 0
         self._cursor_y = 0
 
-        self._controller = GimPanelController(session_bus)
+        self._controller = GimPanelController(session_bus, self)
 
-        session_bus.add_signal_receiver(self.signal_handler,
-                                        dbus_interface='org.kde.kimpanel.inputmethod',
-                                        member_keyword='member')
         self.setup_indicator()
 
         self._languagebar = LanguageBar()
@@ -208,40 +224,44 @@ class GimPanel(Gtk.Window):
 
         self.appindicator.set_menu(menu)
 
-    @log_func(log)
-    def signal_handler(self, *args, **kwargs):
-        if 'UpdatePreeditText' == kwargs['member']:
-            self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % (args[0]))
-        elif 'UpdateAux' == kwargs['member']:
-            self._aux_label.set_markup('<span color="blue">%s</span>' % (args[0]))
-        elif 'UpdateLookupTable' == kwargs['member']:
-            text = []
-            highlight_first = (len(args[0]) > 1)
-            for i, index in enumerate(args[0]):
-                if i == 0 and highlight_first:
-                    text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span> " % (index, args[1][i].strip()))
-                else:
-                    text.append("%s%s" % (index, args[1][i]))
+    def UpdatePreeditText(self, args):
+        self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % (args[0]))
 
-            self._lookup_label.set_markup(''.join(text))
-        elif 'ShowPreedit' == kwargs['member']:
-            self._show_preedit = args[0]
-            self._preedit_label.set_visible(self._show_preedit)
-            self._separator.set_visible(self._show_preedit)
-            if not self._show_preedit:
-                self._preedit_label.set_text('')
-        elif 'ShowLookupTable' == kwargs['member']:
-            self._show_lookup = args[0]
-            if not self._show_lookup:
-                self._lookup_label.set_text('')
-        elif 'ShowAux' == kwargs['member']:
-            self._show_aux = args[0]
-            self._aux_label.set_visible(self._show_aux)
-            if not self._show_aux:
-                self._aux_label.set_text('')
-        elif 'UpdateSpotLocation' == kwargs['member']:
-            self._cursor_x = int(args[0])
-            self._cursor_y = int(args[1])
+    def UpdateAux(self, args):
+        self._aux_label.set_markup('<span color="blue">%s</span>' % (args[0]))
+
+    def UpdateLookupTable(self, args):
+        text = []
+        highlight_first = (len(args[0]) > 1)
+        for i, index in enumerate(args[0]):
+            if i == 0 and highlight_first:
+                text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span> " % (index, args[1][i].strip()))
+            else:
+                text.append("%s%s" % (index, args[1][i]))
+
+        self._lookup_label.set_markup(''.join(text))
+
+    def ShowPreedit(self, args):
+        self._show_preedit = args[0]
+        self._preedit_label.set_visible(self._show_preedit)
+        self._separator.set_visible(self._show_preedit)
+        if not self._show_preedit:
+            self._preedit_label.set_text('')
+
+    def ShowLookupTable(self, args):
+        self._show_lookup = args[0]
+        if not self._show_lookup:
+            self._lookup_label.set_text('')
+
+    def ShowAux(self, args):
+        self._show_aux = args[0]
+        self._aux_label.set_visible(self._show_aux)
+        if not self._show_aux:
+            self._aux_label.set_text('')
+
+    def UpdateSpotLocation(self, args):
+        self._cursor_x = int(args[0])
+        self._cursor_y = int(args[1])
 
         self.do_visible_task()
 
