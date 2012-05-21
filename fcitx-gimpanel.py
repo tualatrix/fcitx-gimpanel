@@ -243,9 +243,9 @@ class GimPanel(Gtk.Window):
             self._cursor_x = int(args[0])
             self._cursor_y = int(args[1])
 
-        self.do_visible_and_move()
+        self.do_visible_task()
 
-    def do_visible_and_move(self):
+    def do_visible_task(self):
         if self._preedit_label.get_text() or \
            self._aux_label.get_text() or \
            self._lookup_label.get_text():
@@ -275,6 +275,7 @@ class GimPanel(Gtk.Window):
 
     def run(self):
         self.show_all()
+        self.do_visible_task()
         Gtk.main()
 
 if __name__ == '__main__':
