@@ -25,8 +25,6 @@ class GimPanelController(dbus.service.Object):
         bus_name = dbus.service.BusName('org.kde.impanel', bus=session_bus)
         dbus.service.Object.__init__(self, bus_name, '/org/kde/impanel')
 
-        self.PanelCreated()
-
     @dbus.service.signal('org.kde.impanel')
     def PanelCreated(self):
         pass
@@ -128,7 +126,8 @@ class GimPanel(Gtk.Window):
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(hbox)
 
-        hbox.pack_start(Handle(), False, False, 0)
+        handle = Handle()
+        hbox.pack_start(handle, False, False, 0)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
                        spacing=3)
@@ -152,8 +151,9 @@ class GimPanel(Gtk.Window):
         self._show_preedit = False
         self._show_lookup = False
         self._show_aux = False
-        self._x = 0
-        self._y = 0
+
+        self._cursor_x = 0
+        self._cursor_y = 0
 
         self._controller = GimPanelController(session_bus)
 
@@ -167,6 +167,7 @@ class GimPanel(Gtk.Window):
         self._languagebar.show_all()
 
         self.connect('destroy', self.on_gimpanel_exit)
+        self.connect("size-allocate", lambda w, a: self._move_position())
 
     def on_realize(self, widget):
         try:
@@ -177,6 +178,7 @@ class GimPanel(Gtk.Window):
         except Exception, e:
             log_traceback(log)
 
+        self._controller.PanelCreated()
 
     @log_func(log)
     def on_gimpanel_exit(self, widget):
@@ -238,8 +240,8 @@ class GimPanel(Gtk.Window):
             if not self._show_aux:
                 self._aux_label.set_text('')
         elif 'UpdateSpotLocation' == kwargs['member']:
-            self._x = int(args[0])
-            self._y = int(args[1])
+            self._cursor_x = int(args[0])
+            self._cursor_y = int(args[1])
 
         self.do_visible_and_move()
 
@@ -248,10 +250,28 @@ class GimPanel(Gtk.Window):
            self._aux_label.get_text() or \
            self._lookup_label.get_text():
             self.set_visible(True)
-            if self._x or self._y:
-                self.move(self._x, self._y)
         else:
             self.set_visible(False)
+
+    def _move_position(self):
+        window_right = self._cursor_x + self.get_allocation().width
+        window_bottom = self._cursor_y + self.get_allocation().height
+
+        root_window = Gdk.get_default_root_window()
+        screen_width, screen_height = root_window.get_width(), root_window.get_height()
+        if window_right > screen_width:
+            x = screen_width - self.get_allocation().width
+        else:
+            x = self._cursor_x
+
+        if window_bottom > screen_height:
+            # TODO 20 should be the cursor size and do not be hard-coded
+            y = self._cursor_y - self.get_allocation().height - 20
+        else:
+            y = self._cursor_y
+
+        log.debug("move to %sx%s" % (x, y))
+        self.move(x, y)
 
     def run(self):
         self.show_all()
