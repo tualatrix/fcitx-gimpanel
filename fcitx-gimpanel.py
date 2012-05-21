@@ -117,6 +117,9 @@ class LanguageBar(Gtk.Window):
     def __init__(self):
         GObject.GObject.__init__(self, type=Gtk.WindowType.POPUP)
 
+        self._bar_x = 0
+        self._bar_y = 0
+
         self.set_border_width(5)
 
         self._toolbar = Gtk.Toolbar()
@@ -126,6 +129,7 @@ class LanguageBar(Gtk.Window):
 
         self._handle = Gtk.ToolItem()
         handle = Handle()
+        handle.connect('move-end', self.on_handle_move_end)
         self._handle.add(handle)
         self._toolbar.insert(self._handle, -1)
 
@@ -133,6 +137,49 @@ class LanguageBar(Gtk.Window):
         self._toolbar.insert(self._about_button, -1)
 
         self.add(self._toolbar)
+
+        self.connect('destroy', self.on_languagebar_destroy)
+        self.connect('realize', self.on_languagebar_realize)
+        self.connect('size-allocate', self.on_languagebar_position)
+
+    def on_handle_move_end(self, widget):
+        self._bar_x, self._bar_y = self.get_position()
+
+    @log_func(log)
+    def on_languagebar_destroy(self, widget):
+        try:
+            f = open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w')
+            f.write("%d %d" % (self._bar_x, self._bar_y))
+            f.close()
+        except Exception, e:
+            log_traceback(log)
+
+    @log_func(log)
+    def on_languagebar_realize(self, widget):
+        try:
+            size = open(os.path.join(CONFIG_ROOT, 'gimpanel-state')).read().strip()
+            x, y = size.split()
+            self._bar_x, self._bar_y = int(x), int(y)
+            log.debug("Realize bar, the bar_x and bar_y: %dx%d" % (self._bar_x, self._bar_y))
+        except Exception, e:
+            log_traceback(log)
+
+    def on_languagebar_position(self, widget, *args):
+        window_right = self._bar_x + widget.get_allocation().width
+        window_bottom = self._bar_y + widget.get_allocation().height
+
+        log.debug("Bar window right and bottom: %dx%d" % (window_right, window_bottom))
+
+        root_window = Gdk.get_default_root_window()
+        screen_width, screen_height = root_window.get_width(), root_window.get_height()
+        if window_right > screen_width:
+            self._bar_x = screen_width - widget.get_allocation().width
+
+        if window_bottom > screen_height:
+            self._bar_y = screen_height - widget.get_allocation().height
+
+        log.debug("Move bar to %sx%s" % (self._bar_x, self._bar_y))
+        self.move(self._bar_x, self._bar_y)
 
 
 class GimPanel(Gtk.Window):
@@ -179,33 +226,18 @@ class GimPanel(Gtk.Window):
         self.setup_indicator()
 
         self._languagebar = LanguageBar()
-        self._languagebar.connect('realize', self.on_realize)
         self._languagebar.show_all()
 
         self.connect('destroy', self.on_gimpanel_exit)
         self.connect("size-allocate", lambda w, a: self._move_position())
+        self.connect('realize', self.on_realize)
 
     def on_realize(self, widget):
-        try:
-            size = open(os.path.join(CONFIG_ROOT, 'gimpanel-state')).read().strip()
-            width, height = size.split()
-            log.debug("Set the window size to: %sx%s" % (width, height))
-            self._languagebar.move(int(width), int(height))
-        except Exception, e:
-            log_traceback(log)
-
         self._controller.PanelCreated()
 
     @log_func(log)
     def on_gimpanel_exit(self, widget):
-        try:
-            x, y = self._languagebar.get_position()
-            f = open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w')
-            f.write("%d %d" % (x, y))
-            f.close()
-        except Exception, e:
-            log_traceback(log)
-
+        self._languagebar.destroy()
         Gtk.main_quit()
 
     def setup_indicator(self):
@@ -263,7 +295,9 @@ class GimPanel(Gtk.Window):
         self._cursor_x = int(args[0])
         self._cursor_y = int(args[1])
 
-        self.do_visible_task()
+    def RegisterProperties(self, args):
+        for arg in args[0]:
+            print arg
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \
@@ -290,7 +324,7 @@ class GimPanel(Gtk.Window):
         else:
             y = self._cursor_y
 
-        log.debug("move to %sx%s" % (x, y))
+        log.debug("Move gimpanel to %sx%s" % (x, y))
         self.move(x, y)
 
     def run(self):
