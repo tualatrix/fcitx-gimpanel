@@ -34,7 +34,7 @@ class GimPanelController(dbus.service.Object):
         signal_name = kwargs['member']
 
         if hasattr(self._panel, signal_name):
-            getattr(self._panel, signal_name)(args)
+            getattr(self._panel, signal_name)(*args)
         else:
             log.warning("Un-handle signal_name: %s" % signal_name)
             for i, arg in enumerate(args):
@@ -120,18 +120,30 @@ class LanguageBar(Gtk.Window):
         self._bar_x = 0
         self._bar_y = 0
 
-        self.set_border_width(5)
+        self.set_border_width(2)
 
         self._toolbar = Gtk.Toolbar()
         self._toolbar.set_style(Gtk.ToolbarStyle.BOTH_HORIZ)
         self._toolbar.set_show_arrow(False)
-        self._toolbar.set_icon_size(Gtk.IconSize.MENU)
+        self._toolbar.set_icon_size(Gtk.IconSize.SMALL_TOOLBAR)
 
         self._handle = Gtk.ToolItem()
         handle = Handle()
         handle.connect('move-end', self.on_handle_move_end)
         self._handle.add(handle)
         self._toolbar.insert(self._handle, -1)
+
+        self._logo_button = Gtk.ToolButton()
+        self._toolbar.insert(self._logo_button, -1)
+
+        self._im_button = Gtk.ToolButton()
+        self._toolbar.insert(self._im_button, -1)
+
+        self._vk_button = Gtk.ToolButton()
+        self._toolbar.insert(self._vk_button, -1)
+
+        self._fullwidth_button = Gtk.ToolButton()
+        self._toolbar.insert(self._fullwidth_button, -1)
 
         self._about_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ABOUT)
         self._toolbar.insert(self._about_button, -1)
@@ -256,13 +268,13 @@ class GimPanel(Gtk.Window):
 
         self.appindicator.set_menu(menu)
 
-    def UpdatePreeditText(self, args):
-        self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % (args[0]))
+    def UpdatePreeditText(self, text, attr):
+        self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % text)
 
-    def UpdateAux(self, args):
-        self._aux_label.set_markup('<span color="blue">%s</span>' % (args[0]))
+    def UpdateAux(self, text, attr):
+        self._aux_label.set_markup('<span color="blue">%s</span>' % text)
 
-    def UpdateLookupTable(self, args):
+    def UpdateLookupTable(self, *args):
         text = []
         highlight_first = (len(args[0]) > 1)
         for i, index in enumerate(args[0]):
@@ -273,31 +285,53 @@ class GimPanel(Gtk.Window):
 
         self._lookup_label.set_markup(''.join(text))
 
-    def ShowPreedit(self, args):
-        self._show_preedit = args[0]
+    def ShowPreedit(self, to_show):
+        self._show_preedit = to_show
         self._preedit_label.set_visible(self._show_preedit)
         self._separator.set_visible(self._show_preedit)
         if not self._show_preedit:
             self._preedit_label.set_text('')
 
-    def ShowLookupTable(self, args):
-        self._show_lookup = args[0]
+    def ShowLookupTable(self, to_show):
+        self._show_lookup = to_show
         if not self._show_lookup:
             self._lookup_label.set_text('')
 
-    def ShowAux(self, args):
-        self._show_aux = args[0]
+    def ShowAux(self, to_show):
+        self._show_aux = to_show
         self._aux_label.set_visible(self._show_aux)
         if not self._show_aux:
             self._aux_label.set_text('')
 
-    def UpdateSpotLocation(self, args):
-        self._cursor_x = int(args[0])
-        self._cursor_y = int(args[1])
+    def UpdateSpotLocation(self, x, y):
+        self._cursor_x, self._cursor_y = x, y
 
     def RegisterProperties(self, args):
-        for arg in args[0]:
-            print arg
+        for arg in args:
+            log.debug("RegisterProperties: %s" % arg)
+            if arg.split(':')[0] == '/Fcitx/logo':
+                self._languagebar._logo_button.set_icon_name(arg.split(':')[2])
+            elif arg.split(':')[0] == '/Fcitx/im':
+                self._languagebar._im_button.set_icon_name(arg.split(':')[2])
+            elif arg.split(':')[0] == '/Fcitx/vk':
+                self._languagebar._vk_button.set_icon_name(arg.split(':')[2])
+            elif arg.split(':')[0] == '/Fcitx/fullwidth':
+                self._languagebar._fullwidth_button.set_icon_name(arg.split(':')[2])
+
+    def UpdateProperty(self, value):
+        log.debug("UpdateProperty: %s" % value)
+        if value.split(':')[0] == '/Fcitx/logo':
+            self._languagebar._logo_button.set_icon_name(value.split(':')[2])
+        elif value.split(':')[0] == '/Fcitx/im':
+            self._languagebar._im_button.set_icon_name(value.split(':')[2])
+        elif value.split(':')[0] == '/Fcitx/vk':
+            self._languagebar._vk_button.set_icon_name(value.split(':')[2])
+        elif value.split(':')[0] == '/Fcitx/fullwidth':
+            self._languagebar._fullwidth_button.set_icon_name(value.split(':')[2])
+
+    def Enable(self, enabled):
+        log.debug("Enable: %s" % enabled)
+        self._languagebar.set_visible(enabled)
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \
