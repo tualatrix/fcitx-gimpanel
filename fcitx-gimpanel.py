@@ -111,9 +111,8 @@ class GimPanel(Gtk.Window):
 
     def setup_indicator(self):
         self.appindicator = AppIndicator.Indicator.new('gimpanel',
-                                                       'ibus-keyboard',
+                                                       'fcitx-kbd',
                                                        AppIndicator.IndicatorCategory.APPLICATION_STATUS)
-        self.appindicator.set_attention_icon('ibus-keyboard')
         self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
 
         menu = Gtk.Menu()
@@ -174,8 +173,14 @@ class GimPanel(Gtk.Window):
 
     def UpdateProperty(self, value):
         prop_name = value.split(':')[0]
+        icon_name = value.split(':')[2]
 
         if prop_name in self.langpanel.fcitx_prop_dict.keys():
+            if prop_name == '/Fcitx/im' and icon_name != 'fcitx-kbd':
+                self.appindicator.set_property("attention-icon-name", icon_name)
+                self.appindicator.set_status(AppIndicator.IndicatorStatus.ATTENTION)
+            else:
+                self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
             setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
         else:
             log.warning('UpdateProperty: No handle prop name: %s' % prop_name)
