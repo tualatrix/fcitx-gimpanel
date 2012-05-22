@@ -96,6 +96,7 @@ class GimPanel(Gtk.Window):
 
         self.langpanel = LangPanel()
         self.langpanel.show_all()
+        self.langpanel.hide()
 
         self.connect('destroy', self.on_gimpanel_exit)
         self.connect("size-allocate", lambda w, a: self._move_position())
@@ -176,10 +177,12 @@ class GimPanel(Gtk.Window):
         icon_name = value.split(':')[2]
 
         if prop_name in self.langpanel.fcitx_prop_dict.keys():
-            if prop_name == '/Fcitx/im' and icon_name != 'fcitx-kbd':
+            if self.langpanel.is_default_im():
                 self.appindicator.set_property("attention-icon-name", icon_name)
                 self.appindicator.set_status(AppIndicator.IndicatorStatus.ATTENTION)
+                self.langpanel.set_visible(True)
             else:
+                self.langpanel.set_visible(False)
                 self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
             setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
         else:
@@ -187,7 +190,6 @@ class GimPanel(Gtk.Window):
 
     def Enable(self, enabled):
         log.debug("Enable: %s" % enabled)
-        self.langpanel.set_visible(enabled)
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \

@@ -79,6 +79,18 @@ class LangPanel(Gtk.Window):
         for signal_name in self.fcitx_prop_dict.values():
             self.connect('notify::%s' % signal_name, self.on_property_notify, '_%s_button' % signal_name)
 
+    log_func(log)
+    def is_default_im(self):
+        try:
+            value = self.get_property('im').split(':')[2]
+            if value != 'fcitx-kbd':
+                return True
+            else:
+                return False
+        except Exception, e:
+            log_traceback(log)
+            return True
+
     def on_property_notify(self, widget, prop, widget_name):
         label, icon_name, tooltip = self.get_property(prop.name).split(':')[1:]
 
@@ -102,7 +114,6 @@ class LangPanel(Gtk.Window):
             size = open(os.path.join(CONFIG_ROOT, 'gimpanel-state')).read().strip()
             x, y = size.split()
             self.panel_x, self.panel_y = int(x), int(y)
-            log.debug("Realize bar, the bar_x and bar_y: %dx%d" % (self.panel_x, self.panel_y))
         except Exception, e:
             log_traceback(log)
 
@@ -110,7 +121,6 @@ class LangPanel(Gtk.Window):
         window_right = self.panel_x + widget.get_allocation().width
         window_bottom = self.panel_y + widget.get_allocation().height
 
-        log.debug("Bar window right and bottom: %dx%d" % (window_right, window_bottom))
 
         root_window = Gdk.get_default_root_window()
         screen_width, screen_height = root_window.get_width(), root_window.get_height()
@@ -120,7 +130,6 @@ class LangPanel(Gtk.Window):
         if window_bottom > screen_height:
             self.panel_y = screen_height - widget.get_allocation().height
 
-        log.debug("Move bar to %sx%s" % (self.panel_x, self.panel_y))
         self.move(self.panel_x, self.panel_y)
 
 GObject.type_register(LangPanel)
