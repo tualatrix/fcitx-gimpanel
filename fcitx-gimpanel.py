@@ -12,6 +12,8 @@ from gi.repository import AppIndicator3 as AppIndicator
 
 from debug import log_traceback, log_func
 from common import CONFIG_ROOT
+from ui import Handle
+from langpanel import LangPanel
 
 GObject.threads_init()
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -47,151 +49,6 @@ class GimPanelController(dbus.service.Object):
     @dbus.service.signal('org.kde.impanel')
     def PanelCreated(self):
         pass
-
-
-class Handle(Gtk.EventBox):
-    __gsignals__ = {
-        "move-begin": (GObject.SignalFlags.RUN_LAST, None, ()),
-        "move-end": (GObject.SignalFlags.RUN_LAST, None, ()),
-    }
-
-    def __init__ (self):
-        super(Handle, self).__init__()
-
-        self.set_visible_window(False)
-        self.set_size_request(10, -1)
-        self.set_events(Gdk.EventMask.EXPOSURE_MASK | \
-                        Gdk.EventMask.BUTTON_PRESS_MASK | \
-                        Gdk.EventMask.BUTTON_RELEASE_MASK | \
-                        Gdk.EventMask.BUTTON1_MOTION_MASK)
-
-        self._move_begined = False
-
-    def do_button_press_event(self, event):
-        if event.button == 1:
-            self._move_begined = True
-            toplevel = self.get_toplevel()
-            x, y = toplevel.get_position()
-            self._press_pos = event.x_root - x, event.y_root - y
-            self.get_parent_window().set_cursor(Gdk.Cursor.new(Gdk.CursorType.FLEUR))
-            self.emit("move-begin")
-            return True
-        return False
-
-    def do_button_release_event(self, event):
-        if event.button == 1:
-            self._move_begined = False
-            self.get_parent_window().set_cursor(Gdk.Cursor.new(Gdk.CursorType.LEFT_PTR))
-            self.emit("move-end")
-            return True
-
-        return False
-
-    def do_motion_notify_event(self, event):
-        if not self._move_begined:
-            return
-        toplevel = self.get_toplevel()
-        x, y = toplevel.get_position()
-        x  = int(event.x_root - self._press_pos[0])
-        y  = int(event.y_root - self._press_pos[1])
-
-        toplevel.move(x, y)
-
-    def do_draw(self, cr):
-        context = self.get_style_context()
-        context.save()
-        context.add_class(Gtk.STYLE_CLASS_SEPARATOR)
-
-        Gtk.render_handle(context,
-                          cr,
-                          0,
-                          0,
-                          self.get_allocation().width,
-                          self.get_allocation().height)
-        context.restore()
-
-        return False
-
-
-class LanguageBar(Gtk.Window):
-    def __init__(self):
-        GObject.GObject.__init__(self, type=Gtk.WindowType.POPUP)
-
-        self._bar_x = 0
-        self._bar_y = 0
-
-        self.set_border_width(2)
-
-        self._toolbar = Gtk.Toolbar()
-        self._toolbar.set_style(Gtk.ToolbarStyle.BOTH_HORIZ)
-        self._toolbar.set_show_arrow(False)
-        self._toolbar.set_icon_size(Gtk.IconSize.SMALL_TOOLBAR)
-
-        self._handle = Gtk.ToolItem()
-        handle = Handle()
-        handle.connect('move-end', self.on_handle_move_end)
-        self._handle.add(handle)
-        self._toolbar.insert(self._handle, -1)
-
-        self._logo_button = Gtk.ToolButton()
-        self._toolbar.insert(self._logo_button, -1)
-
-        self._im_button = Gtk.ToolButton()
-        self._toolbar.insert(self._im_button, -1)
-
-        self._vk_button = Gtk.ToolButton()
-        self._toolbar.insert(self._vk_button, -1)
-
-        self._fullwidth_button = Gtk.ToolButton()
-        self._toolbar.insert(self._fullwidth_button, -1)
-
-        self._about_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ABOUT)
-        self._toolbar.insert(self._about_button, -1)
-
-        self.add(self._toolbar)
-
-        self.connect('destroy', self.on_languagebar_destroy)
-        self.connect('realize', self.on_languagebar_realize)
-        self.connect('size-allocate', self.on_languagebar_position)
-
-    def on_handle_move_end(self, widget):
-        self._bar_x, self._bar_y = self.get_position()
-
-    @log_func(log)
-    def on_languagebar_destroy(self, widget):
-        try:
-            f = open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w')
-            f.write("%d %d" % (self._bar_x, self._bar_y))
-            f.close()
-        except Exception, e:
-            log_traceback(log)
-
-    @log_func(log)
-    def on_languagebar_realize(self, widget):
-        try:
-            size = open(os.path.join(CONFIG_ROOT, 'gimpanel-state')).read().strip()
-            x, y = size.split()
-            self._bar_x, self._bar_y = int(x), int(y)
-            log.debug("Realize bar, the bar_x and bar_y: %dx%d" % (self._bar_x, self._bar_y))
-        except Exception, e:
-            log_traceback(log)
-
-    def on_languagebar_position(self, widget, *args):
-        window_right = self._bar_x + widget.get_allocation().width
-        window_bottom = self._bar_y + widget.get_allocation().height
-
-        log.debug("Bar window right and bottom: %dx%d" % (window_right, window_bottom))
-
-        root_window = Gdk.get_default_root_window()
-        screen_width, screen_height = root_window.get_width(), root_window.get_height()
-        if window_right > screen_width:
-            self._bar_x = screen_width - widget.get_allocation().width
-
-        if window_bottom > screen_height:
-            self._bar_y = screen_height - widget.get_allocation().height
-
-        log.debug("Move bar to %sx%s" % (self._bar_x, self._bar_y))
-        self.move(self._bar_x, self._bar_y)
 
 
 class GimPanel(Gtk.Window):
@@ -237,8 +94,8 @@ class GimPanel(Gtk.Window):
 
         self.setup_indicator()
 
-        self._languagebar = LanguageBar()
-        self._languagebar.show_all()
+        self.langpanel = LangPanel()
+        self.langpanel.show_all()
 
         self.connect('destroy', self.on_gimpanel_exit)
         self.connect("size-allocate", lambda w, a: self._move_position())
@@ -249,7 +106,7 @@ class GimPanel(Gtk.Window):
 
     @log_func(log)
     def on_gimpanel_exit(self, widget):
-        self._languagebar.destroy()
+        self.langpanel.destroy()
         Gtk.main_quit()
 
     def setup_indicator(self):
@@ -308,30 +165,24 @@ class GimPanel(Gtk.Window):
 
     def RegisterProperties(self, args):
         for arg in args:
-            log.debug("RegisterProperties: %s" % arg)
-            if arg.split(':')[0] == '/Fcitx/logo':
-                self._languagebar._logo_button.set_icon_name(arg.split(':')[2])
-            elif arg.split(':')[0] == '/Fcitx/im':
-                self._languagebar._im_button.set_icon_name(arg.split(':')[2])
-            elif arg.split(':')[0] == '/Fcitx/vk':
-                self._languagebar._vk_button.set_icon_name(arg.split(':')[2])
-            elif arg.split(':')[0] == '/Fcitx/fullwidth':
-                self._languagebar._fullwidth_button.set_icon_name(arg.split(':')[2])
+            prop_name = arg.split(':')[0]
+
+            if prop_name in self.langpanel.fcitx_prop_dict.keys():
+                setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], arg)
+            else:
+                log.warning('RegisterProperties: No handle prop name: %s' % prop_name)
 
     def UpdateProperty(self, value):
-        log.debug("UpdateProperty: %s" % value)
-        if value.split(':')[0] == '/Fcitx/logo':
-            self._languagebar._logo_button.set_icon_name(value.split(':')[2])
-        elif value.split(':')[0] == '/Fcitx/im':
-            self._languagebar._im_button.set_icon_name(value.split(':')[2])
-        elif value.split(':')[0] == '/Fcitx/vk':
-            self._languagebar._vk_button.set_icon_name(value.split(':')[2])
-        elif value.split(':')[0] == '/Fcitx/fullwidth':
-            self._languagebar._fullwidth_button.set_icon_name(value.split(':')[2])
+        prop_name = value.split(':')[0]
+
+        if prop_name in self.langpanel.fcitx_prop_dict.keys():
+            setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
+        else:
+            log.warning('UpdateProperty: No handle prop name: %s' % prop_name)
 
     def Enable(self, enabled):
         log.debug("Enable: %s" % enabled)
-        self._languagebar.set_visible(enabled)
+        self.langpanel.set_visible(enabled)
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \
