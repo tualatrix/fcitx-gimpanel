@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Gim Panel
+_Comment=Gim Panel for Fcitx
+Exec=fcitx-gimpanel
+Icon=fcitx
+Terminal=false
+Type=Application
+Categories=System;Utility;
+StartupNotify=false
+X-GNOME-Autostart-Phase=Applications
+X-GNOME-AutoRestart=false
+X-GNOME-Autostart-Notify=false

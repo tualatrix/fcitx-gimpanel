@@ -80,7 +80,7 @@ class GimPanel(Gtk.Window):
         self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
 
         menu = Gtk.Menu()
-        item = Gtk.MenuItem('Exit')
+        item = Gtk.MenuItem(_('Quit'))
         item.connect('activate', self.on_gimpanel_exit)
         menu.append(item)
 

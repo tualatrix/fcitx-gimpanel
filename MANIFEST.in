@@ -1,0 +1,5 @@
+include *.in COPYING ChangeLog AUTHORS README NEWS
+include data/*
+recursive-include data *.in *.desktop
+recursive-include po *.po *.in
+
