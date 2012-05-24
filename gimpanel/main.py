@@ -52,6 +52,7 @@ class GimPanel(Gtk.Window):
 
         self._cursor_x = 0
         self._cursor_y = 0
+        self._cursor_h = 0
 
         self._controller = GimPanelController(session_bus, self)
 
@@ -67,6 +68,7 @@ class GimPanel(Gtk.Window):
 
     def on_realize(self, widget):
         self._controller.PanelCreated()
+        self._controller.PanelCreated2()
 
     @log_func(log)
     def on_gimpanel_exit(self, widget):
@@ -123,9 +125,6 @@ class GimPanel(Gtk.Window):
         if not self._show_aux:
             self._aux_label.set_text('')
 
-    def UpdateSpotLocation(self, x, y):
-        self._cursor_x, self._cursor_y = x, y
-
     def RegisterProperties(self, args):
         for arg in args:
             prop_name = arg.split(':')[0]
@@ -164,7 +163,7 @@ class GimPanel(Gtk.Window):
 
     def _move_position(self):
         window_right = self._cursor_x + self.get_allocation().width
-        window_bottom = self._cursor_y + self.get_allocation().height
+        window_bottom = self._cursor_y + self._cursor_h + self.get_allocation().height
 
         root_window = Gdk.get_default_root_window()
         screen_width, screen_height = root_window.get_width(), root_window.get_height()
@@ -174,10 +173,9 @@ class GimPanel(Gtk.Window):
             x = self._cursor_x
 
         if window_bottom > screen_height:
-            # TODO 20 should be the cursor size and do not be hard-coded
-            y = self._cursor_y - self.get_allocation().height - 20
+            y = self._cursor_y - self.get_allocation().height
         else:
-            y = self._cursor_y
+            y = self._cursor_y + self._cursor_h
 
         log.debug("Move gimpanel to %sx%s" % (x, y))
         self.move(x, y)
