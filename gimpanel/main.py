@@ -3,53 +3,16 @@
 import os
 import logging
 
-import dbus
-import dbus.service
-import dbus.mainloop.glib
-
 from gi.repository import Gtk, Gdk, Gio, GObject
 from gi.repository import AppIndicator3 as AppIndicator
 
-from debug import log_traceback, log_func
-from common import CONFIG_ROOT
-from ui import Handle
-from langpanel import LangPanel
-
-GObject.threads_init()
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-dbus.mainloop.glib.threads_init()
+from gimpanel.debug import log_traceback, log_func
+from gimpanel.ui import Handle
+from gimpanel.common import CONFIG_ROOT
+from gimpanel.controller import GimPanelController
+from gimpanel.langpanel import LangPanel
 
 log = logging.getLogger('GimPanel')
-
-
-class GimPanelController(dbus.service.Object):
-    def __init__(self, session_bus, panel):
-        self._panel = panel
-
-        bus_name = dbus.service.BusName('org.kde.impanel', bus=session_bus)
-        dbus.service.Object.__init__(self, bus_name, '/org/kde/impanel')
-        session_bus.add_signal_receiver(self.signal_handler,
-                                        dbus_interface='org.kde.kimpanel.inputmethod',
-                                        member_keyword='member')
-
-    def signal_handler(self, *args, **kwargs):
-        signal_name = kwargs['member']
-
-        if hasattr(self._panel, signal_name):
-            getattr(self._panel, signal_name)(*args)
-        else:
-            log.warning("Un-handle signal_name: %s" % signal_name)
-            for i, arg in enumerate(args):
-                log.warning("\targs-%d: %s" % (i + 1, arg))
-            for k, v in enumerate(kwargs):
-                log.warning("\tdict args-%d: %s: %s" % (k, v, kwargs[v]))
-
-        self._panel.do_visible_task()
-
-    @dbus.service.signal('org.kde.impanel')
-    def PanelCreated(self):
-        pass
-
 
 class GimPanel(Gtk.Window):
     def __init__(self, session_bus):
@@ -119,8 +82,8 @@ class GimPanel(Gtk.Window):
         menu = Gtk.Menu()
         item = Gtk.MenuItem('Exit')
         item.connect('activate', self.on_gimpanel_exit)
-
         menu.append(item)
+
         menu.show_all()
 
         self.appindicator.set_menu(menu)
@@ -223,12 +186,3 @@ class GimPanel(Gtk.Window):
         self.show_all()
         self.do_visible_task()
         Gtk.main()
-
-if __name__ == '__main__':
-    from debug import enable_debugging
-    enable_debugging()
-
-    session_bus = dbus.SessionBus()
-
-    gimpanel = GimPanel(session_bus)
-    gimpanel.run()

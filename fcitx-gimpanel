@@ -1,0 +1,21 @@
+#!/usr/bin/python
+
+import dbus
+import dbus.mainloop.glib
+
+from gi.repository import GObject
+
+from gimpanel.main import GimPanel
+
+GObject.threads_init()
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+dbus.mainloop.glib.threads_init()
+
+if __name__ == '__main__':
+    from gimpanel.debug import enable_debugging
+    enable_debugging()
+
+    session_bus = dbus.SessionBus()
+
+    gimpanel = GimPanel(session_bus)
+    gimpanel.run()

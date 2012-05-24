@@ -3,7 +3,7 @@ import logging
 import StringIO
 import traceback
 
-from common import CONFIG_ROOT
+from gimpanel.common import CONFIG_ROOT
 
 #The terminal has 8 colors with codes from 0 to 7
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)

@@ -2,10 +2,9 @@ import os
 import logging
 
 from gi.repository import Gtk, Gdk, GObject
-
-from ui import Handle
-from debug import log_traceback, log_func
-from common import CONFIG_ROOT
+from gimpanel.ui import Handle
+from gimpanel.debug import log_traceback, log_func
+from gimpanel.common import CONFIG_ROOT
 
 log = logging.getLogger('LangPanel')
 
