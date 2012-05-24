@@ -1,6 +1,12 @@
+import os
+import logging
 import ConfigParser
 
-class RawConfigSetting(object):
+from gimpanel.common import CONFIG_ROOT
+
+log = logging.getLogger('ConfigSetting')
+
+class ConfigSetting(object):
     '''Just pass the file path'''
     def __init__(self, path, type=type):
         self._type = type
@@ -77,3 +83,24 @@ class RawConfigSetting(object):
         value = self._type_convert_get(value)
 
         return value
+
+
+class FcitxConfig(object):
+    def __init__(self):
+        self._profile = ConfigSetting(os.path.join(CONFIG_ROOT, 'profile'))
+    def get_current_im(self):
+        return self._profile.get_value('Profile', 'IMName')
+
+    def get_enabled_ims(self):
+        list_value = self._profile.get_value('Profile', 'EnabledIMList')
+        enabled_ims = []
+        for im_pair in list_value.split(','):
+            im_name, enable_status = im_pair.split(':')
+            enable_status = eval(enable_status)
+            if enable_status:
+                enabled_ims.append(im_name)
+
+        return enabled_ims
+
+
+fcitx_config = FcitxConfig()
