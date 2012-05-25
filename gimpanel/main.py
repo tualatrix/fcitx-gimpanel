@@ -58,7 +58,7 @@ class GimPanel(Gtk.Window):
 
         self.setup_indicator()
 
-        self.langpanel = LangPanel()
+        self.langpanel = LangPanel(self._controller)
         self.langpanel.show_all()
         self.langpanel.hide()
 
@@ -126,6 +126,8 @@ class GimPanel(Gtk.Window):
             self._aux_label.set_text('')
 
     def RegisterProperties(self, args):
+        self.langpanel.reset_toolbar_items()
+
         for arg in args:
             prop_name = arg.split(':')[0]
 

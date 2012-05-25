@@ -23,17 +23,22 @@ class LangPanel(Gtk.Window):
     fcitx_prop_dict = {
         '/Fcitx/logo': 'logo',
         '/Fcitx/im': 'im',
-        '/Fcitx/vk': 'vk',
+#        '/Fcitx/vk': 'vk',
         '/Fcitx/chttrans': 'chttrans',
         '/Fcitx/punc': 'punc',
         '/Fcitx/fullwidth': 'fullwidth',
         '/Fcitx/remind': 'remind',
     }
 
-    def __init__(self):
+    prop_fcitx_dict = dict((v, k) for k, v in fcitx_prop_dict.iteritems())
+
+    def __init__(self, controller):
         Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
 
         self.set_border_width(2)
+        self.set_resizable(False)
+
+        self._controller = controller
 
         self._toolbar = Gtk.Toolbar()
         self._toolbar.set_style(Gtk.ToolbarStyle.BOTH_HORIZ)
@@ -52,8 +57,8 @@ class LangPanel(Gtk.Window):
         self._im_button = Gtk.ToolButton()
         self._toolbar.insert(self._im_button, -1)
 
-        self._vk_button = Gtk.ToolButton()
-        self._toolbar.insert(self._vk_button, -1)
+#        self._vk_button = Gtk.ToolButton()
+#        self._toolbar.insert(self._vk_button, -1)
 
         self._chttrans_button = Gtk.ToolButton()
         self._toolbar.insert(self._chttrans_button, -1)
@@ -68,6 +73,7 @@ class LangPanel(Gtk.Window):
         self._toolbar.insert(self._remind_button, -1)
 
         self._about_button = Gtk.ToolButton.new_from_stock(Gtk.STOCK_ABOUT)
+        self._about_button.connect('clicked', self.on_about_clicked)
         self._toolbar.insert(self._about_button, -1)
 
         self.add(self._toolbar)
@@ -77,6 +83,24 @@ class LangPanel(Gtk.Window):
         self.connect('size-allocate', self.on_languagebar_position)
         for signal_name in self.fcitx_prop_dict.values():
             self.connect('notify::%s' % signal_name, self.on_property_notify, '_%s_button' % signal_name)
+
+        for button in self._toolbar.get_children()[1:-1]:
+            button.connect('clicked', self.on_button_clicked)
+
+    def on_about_clicked(self, widget):
+        #TODO
+        dialog = Gtk.AboutDialog()
+        dialog.set_property("program-name", 'Gim Panel for Fcitx')
+        dialog.set_property("logo-icon-name", 'fcitx')
+        dialog.run()
+        dialog.destroy()
+
+    def on_button_clicked(self, widget):
+        self._controller.TriggerProperty(widget.fcitx_prop)
+
+    def reset_toolbar_items(self):
+        for key in self.fcitx_prop_dict.values():
+            setattr(self, key, '')
 
     log_func(log)
     def is_default_im(self):
@@ -91,11 +115,16 @@ class LangPanel(Gtk.Window):
             return True
 
     def on_property_notify(self, widget, prop, widget_name):
-        label, icon_name, tooltip = self.get_property(prop.name).split(':')[1:]
+        if self.get_property(prop.name):
+            label, icon_name, tooltip = self.get_property(prop.name).split(':')[1:]
 
-        getattr(self, widget_name).set_label(label)
-        getattr(self, widget_name).set_icon_name(icon_name)
-        getattr(self, widget_name).set_tooltip_text(tooltip)
+            getattr(self, widget_name).fcitx_prop = self.prop_fcitx_dict[prop.name]
+            getattr(self, widget_name).set_visible(True)
+            getattr(self, widget_name).set_label(label)
+            getattr(self, widget_name).set_icon_name(icon_name)
+            getattr(self, widget_name).set_tooltip_text(tooltip)
+        else:
+            getattr(self, widget_name).set_visible(False)
 
     def on_handle_move_end(self, widget):
         self.panel_x, self.panel_y = self.get_position()

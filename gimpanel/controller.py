@@ -37,6 +37,10 @@ class GimPanelController(dbus.service.Object):
     def PanelCreated2(self):
         pass
 
+    @dbus.service.signal('org.kde.impanel')
+    def TriggerProperty(self, key):
+        pass
+
     @dbus.service.method('org.kde.impanel2',
                          in_signature='iiii', out_signature='')
     def SetSpotRect(self, x, y, w, h):
