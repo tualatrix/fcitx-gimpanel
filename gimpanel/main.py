@@ -142,9 +142,7 @@ class GimPanel(Gtk.Window):
             if self.langpanel.is_default_im():
                 self.appindicator.set_property("attention-icon-name", icon_name)
                 self.appindicator.set_status(AppIndicator.IndicatorStatus.ATTENTION)
-                self.langpanel.set_visible(True)
             else:
-                self.langpanel.set_visible(False)
                 self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
             setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
         else:
@@ -152,6 +150,7 @@ class GimPanel(Gtk.Window):
 
     def Enable(self, enabled):
         log.debug("Enable: %s" % enabled)
+        self.langpanel.set_visible(enabled)
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \
