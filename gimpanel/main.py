@@ -53,6 +53,7 @@ class GimPanel(Gtk.Window):
         self._cursor_x = 0
         self._cursor_y = 0
         self._cursor_h = 0
+        self._showing_popup = False
 
         self._controller = GimPanelController(session_bus, self)
 
@@ -61,6 +62,7 @@ class GimPanel(Gtk.Window):
         self.langpanel = LangPanel(self._controller)
         self.langpanel.show_all()
         self.langpanel.hide()
+        self.langpanel.connect('popup_menu', self.show_popup_menu)
 
         self.connect('destroy', self.on_gimpanel_exit)
         self.connect("size-allocate", lambda w, a: self._move_position())
@@ -82,6 +84,7 @@ class GimPanel(Gtk.Window):
                                                        AppIndicator.IndicatorCategory.APPLICATION_STATUS)
         self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         menu = Gtk.Menu()
+        menu.connect('hide', self.on_indicator_menu_hide)
 
         item = Gtk.MenuItem(_('Quit'))
         item.connect('activate', self.on_gimpanel_exit)
@@ -91,9 +94,30 @@ class GimPanel(Gtk.Window):
 
         self.appindicator.set_menu(menu)
 
-    def on_trigger_menu(self, widget, im):
-        self._controller.TriggerProperty(im)
+    @log_func(log)
+    def on_trigger_menu(self, widget):
+        GObject.timeout_add(50, self._real_traiiger_menu, widget)
 
+    @log_func(log)
+    def on_indicator_menu_hide(self, widget):
+        self._showing_popup = False
+        for item in widget.get_children()[-2:]:
+            item.show()
+
+    def _real_traiiger_menu(self, widget):
+        self._controller.TriggerProperty(widget._im)
+
+    @log_func(log)
+    def show_popup_menu(self, widget):
+        self._showing_popup = True
+        menu = self.appindicator.get_menu()
+
+        for item in menu.get_children()[-2:]:
+            item.hide()
+
+        menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
+
+    @log_func(log)
     def update_menu(self, args=None):
         menu = self.appindicator.get_menu()
 
@@ -109,6 +133,7 @@ class GimPanel(Gtk.Window):
                 log.debug("menu item: %s" % arg)
                 item_name = arg.split(':')[1]
                 item = Gtk.RadioMenuItem(item_name)
+                item._im = arg.split(':')[0]
                 if group_item:
                     item.set_property('group', group_item)
                 if i == 0:
@@ -116,7 +141,7 @@ class GimPanel(Gtk.Window):
                 if self.langpanel.get_current_im() == item_name:
                     item.set_active(True)
 
-                item.connect('activate', self.on_trigger_menu, arg.split(':')[0])
+                item.connect('activate', self.on_trigger_menu)
                 menu.insert(item, i)
         else:
             for item in menu.get_children()[:-2]:
@@ -126,8 +151,10 @@ class GimPanel(Gtk.Window):
 
         menu.show_all()
 
+    @log_func(log)
     def ExecMenu(self, *args):
-        self.update_menu(args[0])
+        if not self._showing_popup:
+            self.update_menu(args[0])
 
     def UpdatePreeditText(self, text, attr):
         self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % text)
@@ -164,6 +191,7 @@ class GimPanel(Gtk.Window):
         if not self._show_aux:
             self._aux_label.set_text('')
 
+    @log_func(log)
     def RegisterProperties(self, args):
         self.langpanel.reset_toolbar_items()
 
@@ -189,9 +217,11 @@ class GimPanel(Gtk.Window):
         else:
             log.warning('UpdateProperty: No handle prop name: %s' % prop_name)
 
+    @log_func(log)
     def Enable(self, enabled):
-        self.update_menu()
-        self.langpanel.set_visible(enabled)
+        if not self._showing_popup:
+            self.update_menu()
+        self.langpanel.set_visible(enabled or self._showing_popup)
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \

@@ -55,6 +55,7 @@ class LangPanel(Gtk.Window):
         self._toolbar.insert(self._logo_button, -1)
 
         self._im_button = Gtk.ToolButton()
+        self._im_button.connect('clicked', self.on_im_button_clicked)
         self._toolbar.insert(self._im_button, -1)
 
 #        self._vk_button = Gtk.ToolButton()
@@ -87,6 +88,9 @@ class LangPanel(Gtk.Window):
         for button in self._toolbar.get_children()[1:-1]:
             button.connect('clicked', self.on_button_clicked)
 
+    def on_im_button_clicked(self, widget):
+        self.emit('popup_menu')
+
     def on_about_clicked(self, widget):
         #TODO
         dialog = Gtk.AboutDialog()
@@ -102,7 +106,6 @@ class LangPanel(Gtk.Window):
         for key in self.fcitx_prop_dict.values():
             setattr(self, key, '')
 
-    @log_func(log)
     def is_default_im(self):
         #TODO do not hard code
         try:
