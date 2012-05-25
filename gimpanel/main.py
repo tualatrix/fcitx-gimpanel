@@ -69,6 +69,7 @@ class GimPanel(Gtk.Window):
     def on_realize(self, widget):
         self._controller.PanelCreated()
         self._controller.PanelCreated2()
+        self._controller.TriggerProperty('/Fcitx/im')
 
     @log_func(log)
     def on_gimpanel_exit(self, widget):
@@ -80,8 +81,8 @@ class GimPanel(Gtk.Window):
                                                        'fcitx-kbd',
                                                        AppIndicator.IndicatorCategory.APPLICATION_STATUS)
         self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-
         menu = Gtk.Menu()
+
         item = Gtk.MenuItem(_('Quit'))
         item.connect('activate', self.on_gimpanel_exit)
         menu.append(item)
@@ -89,6 +90,44 @@ class GimPanel(Gtk.Window):
         menu.show_all()
 
         self.appindicator.set_menu(menu)
+
+    def on_trigger_menu(self, widget, im):
+        self._controller.TriggerProperty(im)
+
+    def update_menu(self, args=None):
+        menu = self.appindicator.get_menu()
+
+        if args:
+            for item in menu.get_children()[:-1]:
+                item.destroy()
+
+            if args[0]:
+                menu.insert(Gtk.SeparatorMenuItem(), 0)
+
+            group_item = None
+            for i, arg in enumerate(args):
+                log.debug("menu item: %s" % arg)
+                item_name = arg.split(':')[1]
+                item = Gtk.RadioMenuItem(item_name)
+                if group_item:
+                    item.set_property('group', group_item)
+                if i == 0:
+                    group_item = item
+                if self.langpanel.get_current_im() == item_name:
+                    item.set_active(True)
+
+                item.connect('activate', self.on_trigger_menu, arg.split(':')[0])
+                menu.insert(item, i)
+        else:
+            for item in menu.get_children()[:-2]:
+                item.handler_block_by_func(self.on_trigger_menu)
+                item.set_active(item.get_label() == self.langpanel.get_current_im())
+                item.handler_unblock_by_func(self.on_trigger_menu)
+
+        menu.show_all()
+
+    def ExecMenu(self, *args):
+        self.update_menu(args[0])
 
     def UpdatePreeditText(self, text, attr):
         self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % text)
@@ -151,7 +190,7 @@ class GimPanel(Gtk.Window):
             log.warning('UpdateProperty: No handle prop name: %s' % prop_name)
 
     def Enable(self, enabled):
-        log.debug("Enable: %s" % enabled)
+        self.update_menu()
         self.langpanel.set_visible(enabled)
 
     def do_visible_task(self):

@@ -88,6 +88,7 @@ class ConfigSetting(object):
 class FcitxConfig(object):
     def __init__(self):
         self._profile = ConfigSetting(os.path.join(CONFIG_ROOT, 'profile'))
+
     def get_current_im(self):
         return self._profile.get_value('Profile', 'IMName')
 

@@ -102,8 +102,9 @@ class LangPanel(Gtk.Window):
         for key in self.fcitx_prop_dict.values():
             setattr(self, key, '')
 
-    log_func(log)
+    @log_func(log)
     def is_default_im(self):
+        #TODO do not hard code
         try:
             value = self.get_property('im').split(':')[2]
             if value != 'fcitx-kbd':
@@ -113,6 +114,13 @@ class LangPanel(Gtk.Window):
         except Exception, e:
             log_traceback(log)
             return True
+
+    def get_current_im(self):
+        try:
+            return self.get_property('im').split(':')[1]
+        except Exception, e:
+            log_traceback(log)
+            return ''
 
     def on_property_notify(self, widget, prop, widget_name):
         if self.get_property(prop.name):
