@@ -72,6 +72,7 @@ class GimPanel(Gtk.Window):
         self._controller.PanelCreated()
         self._controller.PanelCreated2()
         self._controller.TriggerProperty('/Fcitx/im')
+        self.do_visible_task()
 
     @log_func(log)
     def on_gimpanel_exit(self, widget):
@@ -221,7 +222,8 @@ class GimPanel(Gtk.Window):
     def Enable(self, enabled):
         if not self._showing_popup:
             self.update_menu()
-        self.langpanel.set_visible(enabled or self._showing_popup)
+        self.langpanel.visible = enabled or self._showing_popup
+        self.langpanel.do_visible_task()
 
     def do_visible_task(self):
         if self._preedit_label.get_text() or \
@@ -249,8 +251,3 @@ class GimPanel(Gtk.Window):
 
         log.debug("Move gimpanel to %sx%s" % (x, y))
         self.move(x, y)
-
-    def run(self):
-        self.show_all()
-        self.do_visible_task()
-        Gtk.main()

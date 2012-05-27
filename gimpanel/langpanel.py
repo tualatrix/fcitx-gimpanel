@@ -19,6 +19,8 @@ class LangPanel(Gtk.Window):
     punc = GObject.Property(type=str, default='')
     fullwidth = GObject.Property(type=str, default='')
     remind = GObject.Property(type=str, default='')
+    visible = GObject.Property(type=bool, default=False)
+    visible_task_id = GObject.Property(type=int, default=0)
 
     fcitx_prop_dict = {
         '/Fcitx/logo': 'logo',
@@ -87,6 +89,15 @@ class LangPanel(Gtk.Window):
 
         for button in self._toolbar.get_children()[1:-1]:
             button.connect('clicked', self.on_button_clicked)
+
+    def do_visible_task(self):
+        if self.visible_task_id == 0:
+            self.visible_task_id = GObject.timeout_add(100, self._do_real_visible_task)
+
+    def _do_real_visible_task(self):
+        if self.visible != self.get_visible():
+            self.set_visible(self.visible)
+        self.visible_task_id = 0
 
     def on_im_button_clicked(self, widget):
         self.emit('popup_menu')

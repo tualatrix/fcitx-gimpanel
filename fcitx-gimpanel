@@ -3,7 +3,7 @@
 import dbus
 import dbus.mainloop.glib
 
-from gi.repository import GObject
+from gi.repository import Unique, GObject, Gtk
 
 from gimpanel.main import GimPanel
 
@@ -11,11 +11,38 @@ GObject.threads_init()
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 dbus.mainloop.glib.threads_init()
 
+
+class GimPanelApp(Unique.App):
+    _window = None
+
+    def __init__(self, name='me.imtx.gimpanel', startup_id=''):
+        Unique.App.__init__(self, name=name, startup_id=startup_id)
+        self.connect('message-received', self.on_message_received)
+    def set_window(self, window):
+        self._window = window
+        self.watch_window(self._window)
+
+    def on_message_received(self, app, command, message, time):
+        if command == Unique.Command.ACTIVATE:
+            pass
+
+        return False
+
+    def run(self):
+        self._window.show_all()
+        Gtk.main()
+
 if __name__ == '__main__':
     from gimpanel.debug import enable_debugging
     enable_debugging()
 
-    session_bus = dbus.SessionBus()
+    app = GimPanelApp()
 
-    gimpanel = GimPanel(session_bus)
-    gimpanel.run()
+    if app.is_running():
+        message = Unique.MessageData()
+        app.send_message(Unique.Command.ACTIVATE, message)
+    else:
+        session_bus = dbus.SessionBus()
+        gimpanel = GimPanel(session_bus)
+        app.set_window(gimpanel)
+        app.run()
