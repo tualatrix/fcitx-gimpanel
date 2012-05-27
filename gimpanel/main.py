@@ -15,8 +15,6 @@ from gimpanel.langpanel import LangPanel
 log = logging.getLogger('GimPanel')
 
 class GimPanel(Gtk.Window):
-    preedit_box_height = GObject.Property(type=int, default=0)
-
     def __init__(self, session_bus):
         Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
         self.set_resizable(False)
@@ -33,25 +31,24 @@ class GimPanel(Gtk.Window):
                        spacing=3)
         hbox.pack_start(vbox, True, True, 6)
 
-        self._preedit_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+        preedit_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
                                spacing=6)
-        vbox.pack_start(self._preedit_hbox, True, True, 0)
+        vbox.pack_start(preedit_hbox, True, True, 0)
 
         self._preedit_label = Gtk.Label()
         self._preedit_label.set_alignment(0, 0.5)
-        self._preedit_hbox.pack_start(self._preedit_label, True, True, 0)
-        self._preedit_hbox.connect('size-allocate', self._on_lookup_size_request)
+        preedit_hbox.pack_start(self._preedit_label, True, True, 0)
 
         self._lookup_separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-        self._preedit_hbox.pack_start(self._lookup_separator, False, False, 0)
+        preedit_hbox.pack_start(self._lookup_separator, False, False, 0)
 
         self.look_forward_button = self._create_arrow_button(Gtk.STOCK_GO_FORWARD)
         self.look_forward_button.connect('clicked', self.on_lookup_forward)
-        self._preedit_hbox.pack_end(self.look_forward_button, False, False, 0)
+        preedit_hbox.pack_end(self.look_forward_button, False, False, 0)
 
         self.look_back_button = self._create_arrow_button(Gtk.STOCK_GO_BACK)
         self.look_back_button.connect('clicked', self.on_lookup_back)
-        self._preedit_hbox.pack_end(self.look_back_button, False, False, 0)
+        preedit_hbox.pack_end(self.look_back_button, False, False, 0)
 
         self._separator = Gtk.Separator()
         vbox.pack_start(self._separator, False, False, 0)
@@ -85,12 +82,6 @@ class GimPanel(Gtk.Window):
         self.connect('destroy', self.on_gimpanel_exit)
         self.connect("size-allocate", lambda w, a: self._move_position())
         self.connect('realize', self.on_realize)
-
-    def _on_lookup_size_request(self, widget, allocation):
-        if self.preedit_box_height < allocation.height:
-            #TODO hard code 3 pixel
-            self.preedit_box_height = allocation.height - 3
-        self._preedit_hbox.set_size_request(-1, self.preedit_box_height)
 
     def on_lookup_back(self, widget):
         self.set_resizable(True)
