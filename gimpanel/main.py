@@ -15,10 +15,12 @@ from gimpanel.langpanel import LangPanel
 log = logging.getLogger('GimPanel')
 
 class GimPanel(Gtk.Window):
+    label_height = GObject.Property(type=int, default=0)
+
     def __init__(self, session_bus):
         Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
         self.set_resizable(False)
-        self.set_border_width(6)
+        self.set_border_width(2)
         self.set_size_request(100, -1)
 
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -33,6 +35,7 @@ class GimPanel(Gtk.Window):
 
         preedit_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
                                spacing=6)
+        preedit_hbox.connect('size-allocate', self.on_preedit_hbox_allocate)
         vbox.pack_start(preedit_hbox, True, True, 0)
 
         self._preedit_label = Gtk.Label()
@@ -86,6 +89,15 @@ class GimPanel(Gtk.Window):
     def on_lookup_back(self, widget):
         self.set_resizable(True)
         self._controller.LookupTablePageUp()
+
+    def on_preedit_hbox_allocate(self, widget, allocation):
+        if self.label_height == 0:
+            max_height = max(self._preedit_label.get_allocation().height,
+                             self._lookup_label.get_allocation().height,
+                             allocation.height)
+            self.label_height = max_height
+            self._preedit_label.set_size_request(-1, max_height)
+            self._lookup_label.set_size_request(-1, max_height)
 
     def on_lookup_forward(self, widget):
         self.set_resizable(True)
