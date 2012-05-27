@@ -38,6 +38,14 @@ class GimPanelController(dbus.service.Object):
         pass
 
     @dbus.service.signal('org.kde.impanel')
+    def LookupTablePageUp(self):
+        pass
+
+    @dbus.service.signal('org.kde.impanel')
+    def LookupTablePageDown(self):
+        pass
+
+    @dbus.service.signal('org.kde.impanel')
     def TriggerProperty(self, key):
         pass
 

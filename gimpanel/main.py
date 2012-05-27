@@ -31,9 +31,24 @@ class GimPanel(Gtk.Window):
                        spacing=3)
         hbox.pack_start(vbox, True, True, 6)
 
+        preedit_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+                               spacing=6)
+        vbox.pack_start(preedit_hbox, True, True, 0)
+
         self._preedit_label = Gtk.Label()
         self._preedit_label.set_alignment(0, 0.5)
-        vbox.pack_start(self._preedit_label, True, True, 0)
+        preedit_hbox.pack_start(self._preedit_label, True, True, 0)
+
+        self._lookup_separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        preedit_hbox.pack_start(self._lookup_separator, False, False, 0)
+
+        self.look_forward_button = self._create_arrow_button(Gtk.STOCK_GO_FORWARD)
+        self.look_forward_button.connect('clicked', self.on_lookup_forward)
+        preedit_hbox.pack_end(self.look_forward_button, False, False, 0)
+
+        self.look_back_button = self._create_arrow_button(Gtk.STOCK_GO_BACK)
+        self.look_back_button.connect('clicked', self.on_lookup_back)
+        preedit_hbox.pack_end(self.look_back_button, False, False, 0)
 
         self._separator = Gtk.Separator()
         vbox.pack_start(self._separator, False, False, 0)
@@ -67,6 +82,23 @@ class GimPanel(Gtk.Window):
         self.connect('destroy', self.on_gimpanel_exit)
         self.connect("size-allocate", lambda w, a: self._move_position())
         self.connect('realize', self.on_realize)
+
+    def on_lookup_back(self, widget):
+        self.set_resizable(True)
+        self._controller.LookupTablePageUp()
+
+    def on_lookup_forward(self, widget):
+        self.set_resizable(True)
+        self._controller.LookupTablePageDown()
+
+    def _create_arrow_button(self, stock_id):
+        button = Gtk.Button(relief=Gtk.ReliefStyle.NONE)
+        image = Gtk.Image.new_from_stock(stock_id=stock_id,
+                                         size=Gtk.IconSize.MENU)
+        button.add(image)
+        button.show_all()
+
+        return button
 
     def on_realize(self, widget):
         self._controller.PanelCreated()
@@ -158,21 +190,38 @@ class GimPanel(Gtk.Window):
             self.update_menu(args[0])
 
     def UpdatePreeditText(self, text, attr):
-        self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % text)
+        if self._preedit_label.get_text() != text:
+            self.set_resizable(False)
+            self._preedit_label.set_markup('<span color="#c131b5">%s</span>' % text)
 
     def UpdateAux(self, text, attr):
         self._aux_label.set_markup('<span color="blue">%s</span>' % text)
 
-    def UpdateLookupTable(self, *args):
-        text = []
-        highlight_first = (len(args[0]) > 1)
-        for i, index in enumerate(args[0]):
-            if i == 0 and highlight_first:
-                text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span> " % (index, args[1][i].strip()))
-            else:
-                text.append("%s%s" % (index, args[1][i]))
+    def UpdateLookupTable(self, label, text,
+                          attr, can_back, can_forward):
+        markup_text = []
+        highlight_first = (len(label) > 1)
+        self.set_resizable(True)
 
-        self._lookup_label.set_markup(''.join(text))
+        for i, index in enumerate(label):
+            if i == 0 and highlight_first:
+                markup_text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span> " % (index, text[i].strip()))
+            else:
+                markup_text.append("%s%s" % (index, text[i]))
+
+        self._lookup_label.set_markup(''.join(markup_text))
+
+        if can_back or can_forward:
+            #FIXME if set_sensitive to button, then the relief will be fixed. GTK+ bug?
+            self.look_back_button.get_child().set_sensitive(can_back)
+            self.look_forward_button.get_child().set_sensitive(can_forward)
+            self.look_back_button.show()
+            self.look_forward_button.show()
+            self._lookup_separator.show()
+        else:
+            self.look_back_button.hide()
+            self.look_forward_button.hide()
+            self._lookup_separator.hide()
 
     def ShowPreedit(self, to_show):
         self._show_preedit = to_show
