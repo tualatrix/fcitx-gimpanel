@@ -188,14 +188,13 @@ class GimPanel(Gtk.Window):
 
                 item.connect('activate', self.on_trigger_menu)
                 menu.insert(item, i)
+
+            menu.show_all()
         else:
             for item in menu.get_children()[:-2]:
                 item.handler_block_by_func(self.on_trigger_menu)
                 item.set_active(item.get_label() == self.langpanel.get_current_im())
                 item.handler_unblock_by_func(self.on_trigger_menu)
-
-        menu.show_all()
-
     @log_func(log)
     def ExecMenu(self, *args):
         if not self._showing_popup:
@@ -281,8 +280,7 @@ class GimPanel(Gtk.Window):
 
     @log_func(log)
     def Enable(self, enabled):
-        if not self._showing_popup:
-            self.update_menu()
+        self.update_menu()
         self.langpanel.visible = enabled or self._showing_popup
         self.langpanel.do_visible_task()
 
