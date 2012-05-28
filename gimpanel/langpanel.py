@@ -111,7 +111,10 @@ class LangPanel(Gtk.Window):
         dialog.destroy()
 
     def on_button_clicked(self, widget):
-        self._controller.TriggerProperty(widget.fcitx_prop)
+        if widget.fcitx_prop != '/Fcitx/im':
+            self._controller.TriggerProperty(widget.fcitx_prop)
+        else:
+            log.error('Do Not TriggerProperty for /Fcitx/im')
 
     def reset_toolbar_items(self):
         for key in self.fcitx_prop_dict.values():

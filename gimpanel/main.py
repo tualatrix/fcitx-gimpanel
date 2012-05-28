@@ -141,7 +141,10 @@ class GimPanel(Gtk.Window):
 
     @log_func(log)
     def on_trigger_menu(self, widget):
-        GObject.timeout_add(50, self._real_traiiger_menu, widget)
+        if widget.get_active():
+            GObject.timeout_add(50, self._real_trigger_menu, widget)
+        else:
+            log.info("%s menu is not active, no trigger menu" % widget._im)
 
     @log_func(log)
     def on_indicator_menu_hide(self, widget):
@@ -149,7 +152,8 @@ class GimPanel(Gtk.Window):
         for item in widget.get_children()[-2:]:
             item.show()
 
-    def _real_traiiger_menu(self, widget):
+    def _real_trigger_menu(self, widget):
+        log.error("TriggerProperty: %s" % widget._im)
         self._controller.TriggerProperty(widget._im)
 
     @log_func(log)
@@ -199,6 +203,8 @@ class GimPanel(Gtk.Window):
     def ExecMenu(self, *args):
         if not self._showing_popup:
             self.update_menu(args[0])
+        else:
+            log.info("Is showing popup menu, so no update_menu")
 
     def UpdatePreeditText(self, text, attr):
         if self._preedit_label.get_text() != text:
@@ -254,21 +260,26 @@ class GimPanel(Gtk.Window):
 
     @log_func(log)
     def RegisterProperties(self, args):
-        self.langpanel.reset_toolbar_items()
+        if not self._showing_popup:
+            self.langpanel.reset_toolbar_items()
 
-        for arg in args:
-            prop_name = arg.split(':')[0]
+            for arg in args:
+                prop_name = arg.split(':')[0]
 
-            if prop_name in self.langpanel.fcitx_prop_dict.keys():
-                setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], arg)
-            else:
-                log.warning('RegisterProperties: No handle prop name: %s' % prop_name)
+                if prop_name in self.langpanel.fcitx_prop_dict.keys():
+                    setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], arg)
+                else:
+                    log.warning('RegisterProperties: No handle prop name: %s' % prop_name)
+        else:
+            log.info('Stop RegisterProperties: because of showing popup menu')
 
     def UpdateProperty(self, value):
         prop_name = value.split(':')[0]
         icon_name = value.split(':')[2]
 
-        if prop_name in self.langpanel.fcitx_prop_dict.keys():
+        if prop_name in self.langpanel.fcitx_prop_dict.keys() and \
+                not self._showing_popup:
+            log.debug('UpdateProperty: prop name: %s for value: %s' % (prop_name, icon_name))
             if self.langpanel.is_default_im():
                 self.appindicator.set_property("attention-icon-name", icon_name)
                 self.appindicator.set_status(AppIndicator.IndicatorStatus.ATTENTION)
@@ -276,7 +287,7 @@ class GimPanel(Gtk.Window):
                 self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
             setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
         else:
-            log.warning('UpdateProperty: No handle prop name: %s' % prop_name)
+            log.warning('UpdateProperty: No handle prop name: %s or is showing popup menu' % prop_name)
 
     @log_func(log)
     def Enable(self, enabled):
