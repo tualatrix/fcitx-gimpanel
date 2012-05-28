@@ -128,6 +128,7 @@ class GimPanel(Gtk.Window):
                                                        'fcitx-kbd',
                                                        AppIndicator.IndicatorCategory.APPLICATION_STATUS)
         self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
+        self.appindicator.connect('notify::icon-name', self.on_indicator_icon_changed)
         menu = Gtk.Menu()
         menu.connect('hide', self.on_indicator_menu_hide)
 
@@ -138,6 +139,16 @@ class GimPanel(Gtk.Window):
         menu.show_all()
 
         self.appindicator.set_menu(menu)
+
+    def on_indicator_icon_changed(self, widget, prop):
+        indicator_value = self.appindicator.get_property(prop.name)
+        langpanel_value = self.langpanel.get_current_im_icon_name()
+
+        log.debug('on_indicator_icon_changed: %s/%s' % (indicator_value, langpanel_value))
+        if indicator_value != langpanel_value:
+            self.appindicator.handler_block_by_func(self.on_indicator_icon_changed)
+            self.appindicator.set_property(prop.name, langpanel_value)
+            self.appindicator.handler_unblock_by_func(self.on_indicator_icon_changed)
 
     @log_func(log)
     def on_trigger_menu(self, widget):
@@ -280,11 +291,7 @@ class GimPanel(Gtk.Window):
         if prop_name in self.langpanel.fcitx_prop_dict.keys() and \
                 not self._showing_popup:
             log.debug('UpdateProperty: prop name: %s for value: %s' % (prop_name, icon_name))
-            if self.langpanel.is_default_im():
-                self.appindicator.set_property("attention-icon-name", icon_name)
-                self.appindicator.set_status(AppIndicator.IndicatorStatus.ATTENTION)
-            else:
-                self.appindicator.set_status(AppIndicator.IndicatorStatus.ACTIVE)
+            self.appindicator.set_property("icon-name", icon_name)
             setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
         else:
             log.warning('UpdateProperty: No handle prop name: %s or is showing popup menu' % prop_name)

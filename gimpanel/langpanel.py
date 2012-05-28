@@ -139,6 +139,13 @@ class LangPanel(Gtk.Window):
             log_traceback(log)
             return ''
 
+    def get_current_im_icon_name(self):
+        try:
+            return self.get_property('im').split(':')[2]
+        except Exception, e:
+            log_traceback(log)
+            return ''
+
     def on_property_notify(self, widget, prop, widget_name):
         if self.get_property(prop.name):
             label, icon_name, tooltip = self.get_property(prop.name).split(':')[1:]
