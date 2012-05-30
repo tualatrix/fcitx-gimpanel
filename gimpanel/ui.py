@@ -52,8 +52,17 @@ class Handle(Gtk.EventBox):
     def do_draw(self, cr):
         context = self.get_style_context()
         context.save()
+        context.set_state(Gtk.StateFlags.BACKDROP)
         context.add_class(Gtk.STYLE_CLASS_SEPARATOR)
+        context.add_class('primary-toolbar')
         context.set_background(self.get_parent_window())
+
+        Gtk.render_background(context,
+                              cr,
+                              0,
+                              0,
+                              self.get_allocation().width,
+                              self.get_allocation().height)
 
         Gtk.render_handle(context,
                           cr,

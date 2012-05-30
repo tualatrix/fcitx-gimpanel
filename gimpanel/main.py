@@ -19,19 +19,15 @@ class GimPanel(Gtk.Window):
 
     def __init__(self, session_bus):
         Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
+
         self.set_resizable(False)
-        self.set_border_width(2)
+        self.set_border_width(3)
+        self.get_style_context().add_class('primary-toolbar')
         self.set_size_request(100, -1)
-
-        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-        self.add(hbox)
-
-        handle = Handle()
-        hbox.pack_start(handle, False, False, 0)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL,
                        spacing=3)
-        hbox.pack_start(vbox, True, True, 6)
+        self.add(vbox)
 
         preedit_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
                                spacing=6)
