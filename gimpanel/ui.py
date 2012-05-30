@@ -53,6 +53,7 @@ class Handle(Gtk.EventBox):
         context = self.get_style_context()
         context.save()
         context.add_class(Gtk.STYLE_CLASS_SEPARATOR)
+        context.set_background(self.get_parent_window())
 
         Gtk.render_handle(context,
                           cr,
