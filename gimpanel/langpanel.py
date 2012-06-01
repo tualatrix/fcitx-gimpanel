@@ -37,7 +37,7 @@ class LangPanel(Gtk.Window):
     def __init__(self, controller):
         Gtk.Window.__init__(self, type=Gtk.WindowType.POPUP)
 
-        self.get_style_context().add_class('primary-toolbar')
+        self.set_border_width(2)
         self.set_resizable(False)
 
         self._controller = controller
