@@ -68,6 +68,7 @@ class GimPanel(Gtk.Window):
         self._cursor_y = 0
         self._cursor_h = 0
         self._showing_popup = False
+        self.non_im_items_index = 0
 
         self._controller = GimPanelController(session_bus, self)
 
@@ -128,9 +129,27 @@ class GimPanel(Gtk.Window):
         menu = Gtk.Menu()
         menu.connect('hide', self.on_indicator_menu_hide)
 
+        menu.append(Gtk.SeparatorMenuItem())
+
+        configure_panel_menu = Gtk.MenuItem(_('Panel Preferences'))
+        configure_panel_menu.connect("activate", lambda *a: self._controller.Configure())
+        menu.append(configure_panel_menu)
+
+        configure_menu = Gtk.MenuItem(_('Input Methods Preferences'))
+        configure_menu.connect("activate", lambda *a: self._controller.Configure())
+        menu.append(configure_menu)
+
+        about_menu = Gtk.MenuItem(_('About'))
+        about_menu.connect("activate", lambda *a: self.langpanel.on_about_clicked())
+        menu.append(about_menu)
+
+        menu.append(Gtk.SeparatorMenuItem())
+
         item = Gtk.MenuItem(_('Quit'))
         item.connect('activate', self.on_gimpanel_exit)
         menu.append(item)
+
+        self.non_im_items_index = - len(menu.get_children())
 
         menu.show_all()
 
@@ -156,7 +175,7 @@ class GimPanel(Gtk.Window):
     @log_func(log)
     def on_indicator_menu_hide(self, widget):
         self._showing_popup = False
-        for item in widget.get_children()[-2:]:
+        for item in widget.get_children()[self.non_im_items_index:]:
             item.show()
 
     def _real_trigger_menu(self, widget):
@@ -168,7 +187,7 @@ class GimPanel(Gtk.Window):
         self._showing_popup = True
         menu = self.appindicator.get_menu()
 
-        for item in menu.get_children()[-2:]:
+        for item in menu.get_children()[self.non_im_items_index:]:
             item.hide()
 
         menu.popup(None, None, None, None, 0, Gtk.get_current_event_time())
@@ -178,11 +197,8 @@ class GimPanel(Gtk.Window):
         menu = self.appindicator.get_menu()
 
         if args:
-            for item in menu.get_children()[:-1]:
+            for item in menu.get_children()[:self.non_im_items_index]:
                 item.destroy()
-
-            if args[0]:
-                menu.insert(Gtk.SeparatorMenuItem(), 0)
 
             group_item = None
             for i, arg in enumerate(args):
@@ -202,7 +218,7 @@ class GimPanel(Gtk.Window):
 
             menu.show_all()
         else:
-            for item in menu.get_children()[:-2]:
+            for item in menu.get_children()[:self.non_im_items_index]:
                 item.handler_block_by_func(self.on_trigger_menu)
                 item.set_active(item.get_label() == self.langpanel.get_current_im())
                 item.handler_unblock_by_func(self.on_trigger_menu)

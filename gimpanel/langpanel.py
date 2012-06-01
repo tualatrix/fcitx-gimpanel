@@ -102,7 +102,7 @@ class LangPanel(Gtk.Window):
     def on_im_button_clicked(self, widget):
         self.emit('popup_menu')
 
-    def on_about_clicked(self, widget):
+    def on_about_clicked(self, widget=None):
         #TODO
         dialog = Gtk.AboutDialog()
         dialog.set_property("program-name", 'Gim Panel for Fcitx')

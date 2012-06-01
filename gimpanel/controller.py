@@ -30,6 +30,10 @@ class GimPanelController(dbus.service.Object):
         self._panel.do_visible_task()
 
     @dbus.service.signal('org.kde.impanel')
+    def Configure(self):
+        pass
+
+    @dbus.service.signal('org.kde.impanel')
     def PanelCreated(self):
         pass
 
