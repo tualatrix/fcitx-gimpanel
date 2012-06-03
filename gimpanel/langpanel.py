@@ -5,6 +5,7 @@ from gi.repository import Gtk, Gdk, GObject
 from gimpanel.ui import Handle
 from gimpanel.debug import log_traceback, log_func
 from gimpanel.common import CONFIG_ROOT
+from gimpanel import __version__
 
 log = logging.getLogger('LangPanel')
 
@@ -105,8 +106,13 @@ class LangPanel(Gtk.Window):
     def on_about_clicked(self, widget=None):
         #TODO
         dialog = Gtk.AboutDialog()
-        dialog.set_property("program-name", 'Gim Panel for Fcitx')
+        dialog.set_property("program-name", 'Gimpanel')
+        dialog.set_property("comments", _('The GTK+ frontend for Fcitx'))
         dialog.set_property("logo-icon-name", 'fcitx')
+        dialog.set_property("authors", ['Tualatrix Chou <tualatrix@gmail.com>'])
+        dialog.set_property("version", __version__)
+        dialog.set_property("website", 'https://github.com/tualatrix/fcitx-gimpanel')
+        dialog.set_property("website-label", _('Github Homepage'))
         dialog.run()
         dialog.destroy()
 

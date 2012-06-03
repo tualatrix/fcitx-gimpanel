@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-05-27 10:53+0800\n"
+"POT-Creation-Date: 2012-06-03 20:52+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,22 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../gimpanel/main.py:90
+#: ../gimpanel/langpanel.py:110 ../data/fcitx-gimpanel.desktop.in.h:1
+msgid "The GTK+ frontend for Fcitx"
+msgstr ""
+
+#: ../gimpanel/langpanel.py:115
+msgid "Github Homepage"
+msgstr ""
+
+#: ../gimpanel/main.py:138
+msgid "Input Methods Preferences"
+msgstr ""
+
+#: ../gimpanel/main.py:142
+msgid "About"
+msgstr ""
+
+#: ../gimpanel/main.py:148
 msgid "Quit"
 msgstr ""

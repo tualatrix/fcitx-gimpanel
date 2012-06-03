@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Gim Panel
-_Comment=Gim Panel for Fcitx
+Name=Gimpanel
+_Comment=The GTK+ frontend for Fcitx
 Exec=fcitx-gimpanel
 Icon=fcitx
 Terminal=false

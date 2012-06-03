@@ -135,10 +135,6 @@ class GimPanel(Gtk.Window):
 
         menu.append(Gtk.SeparatorMenuItem())
 
-        configure_panel_menu = Gtk.MenuItem(_('Panel Preferences'))
-        configure_panel_menu.connect("activate", lambda *a: self._controller.Configure())
-        menu.append(configure_panel_menu)
-
         configure_menu = Gtk.MenuItem(_('Input Methods Preferences'))
         configure_menu.connect("activate", lambda *a: self._controller.Configure())
         menu.append(configure_menu)

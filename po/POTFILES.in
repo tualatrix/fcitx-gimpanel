@@ -6,3 +6,4 @@ gimpanel/controller.py
 gimpanel/debug.py
 gimpanel/main.py
 gimpanel/__init__.py
+data/fcitx-gimpanel.desktop.in
