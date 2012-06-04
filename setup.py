@@ -3,7 +3,7 @@ from gimpanel import __version__
 
 setup(name='gimpanel',
       version=__version__,
-      description='The GTK font of Fcitx',
+      description='A GTK front-end of Fcitx',
       author='Tualatrix Chou',  
       author_email='tualatrix@gmail.com',
       url='http://imtx.com',
