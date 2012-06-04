@@ -104,12 +104,13 @@ class LangPanel(Gtk.Window):
         self.emit('popup_menu')
 
     def on_about_clicked(self, widget=None):
-        #TODO
         dialog = Gtk.AboutDialog()
         dialog.set_property("program-name", 'Gimpanel')
         dialog.set_property("comments", _('The GTK+ frontend for Fcitx'))
         dialog.set_property("logo-icon-name", 'fcitx')
         dialog.set_property("authors", ['Tualatrix Chou <tualatrix@gmail.com>'])
+        #Add your name to translator-credits
+        dialog.set_property("translator-credits", _("translator-credits"))
         dialog.set_property("version", __version__)
         dialog.set_property("website", 'https://github.com/tualatrix/fcitx-gimpanel')
         dialog.set_property("website-label", _('Github Homepage'))

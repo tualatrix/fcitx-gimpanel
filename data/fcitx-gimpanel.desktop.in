@@ -1,8 +1,6 @@
 [Desktop Entry]
 Name=Gimpanel
 _Comment=The GTK+ frontend for Fcitx
-_Comment[zh_TW]=小企鵝輸入法的 GTK 前端
-_Comment[zh_CN]=小企鹅输入法的 GTK 前端
 Exec=fcitx-gimpanel
 Icon=fcitx
 Terminal=false

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Gimpanel 0.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-03 20:42+0800\n"
+"POT-Creation-Date: 2012-06-04 12:13+0800\n"
 "PO-Revision-Date: 2012-06-03 20:42+0800\n"
 "Last-Translator: Tualatrix Chou <tualatrix@gmail.com>\n"
 "Language-Team: Tualatrix Chou <tualatrix@gmail.com>\n"
@@ -16,11 +16,16 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../gimpanel/langpanel.py:110 ../data/fcitx-gimpanel.desktop.in.h:1
+#: ../gimpanel/langpanel.py:109 ../data/fcitx-gimpanel.desktop.in.h:1
 msgid "The GTK+ frontend for Fcitx"
 msgstr "Fcitx 输入法的 GTK+ 前端"
 
-#: ../gimpanel/langpanel.py:115
+#. Add your name to translator-credits
+#: ../gimpanel/langpanel.py:113
+msgid "translator-credits"
+msgstr "Tualatrix Chou <tualatrix@gmail.com>"
+
+#: ../gimpanel/langpanel.py:116
 msgid "Github Homepage"
 msgstr "Github 主页"
 
