@@ -106,7 +106,7 @@ class LangPanel(Gtk.Window):
     def on_about_clicked(self, widget=None):
         dialog = Gtk.AboutDialog()
         dialog.set_property("program-name", 'Gimpanel')
-        dialog.set_property("comments", _('The GTK+ frontend for Fcitx'))
+        dialog.set_property("comments", _('A GTK+ frontend for Fcitx'))
         dialog.set_property("logo-icon-name", 'fcitx')
         dialog.set_property("authors", ['Tualatrix Chou <tualatrix@gmail.com>'])
         #Add your name to translator-credits
