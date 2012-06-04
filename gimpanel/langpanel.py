@@ -170,17 +170,18 @@ class LangPanel(Gtk.Window):
 
     def on_languagebar_destroy(self, widget):
         try:
-            f = open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w')
-            f.write("%d %d" % (self.panel_x, self.panel_y))
-            f.close()
+            with open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w') as f:
+                f.write("%d %d" % (self.panel_x, self.panel_y))
         except Exception, e:
             log_traceback(log)
 
     def on_languagebar_realize(self, widget):
         try:
-            size = open(os.path.join(CONFIG_ROOT, 'gimpanel-state')).read().strip()
-            x, y = size.split()
-            self.panel_x, self.panel_y = int(x), int(y)
+            with open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w+') as f:
+                size = f.read().strip()
+            if size:
+                x, y = size.split()
+                self.panel_x, self.panel_y = int(x), int(y)
         except Exception, e:
             log_traceback(log)
 
