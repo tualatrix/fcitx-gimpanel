@@ -245,9 +245,11 @@ class GimPanel(Gtk.Window):
 
         for i, index in enumerate(label):
             if i == 0 and highlight_first:
-                markup_text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span> " % (index, text[i].strip()))
-            else:
+                markup_text.append("%s<span bgcolor='#f07746' fgcolor='white'>%s</span>" % (index, text[i].strip()))
+            elif i == 0:
                 markup_text.append("%s%s" % (index, text[i]))
+            else:
+                markup_text.append("     %s%s" % (index, text[i]))
 
         self._lookup_label.set_markup(''.join(markup_text))
 
