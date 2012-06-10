@@ -82,7 +82,8 @@ class LangPanel(Gtk.Window):
 
         self.add(self._toolbar)
 
-        self.connect('realize', self.on_languagebar_realize)
+        self._init_languagebar_position()
+
         self.connect('destroy', self.on_languagebar_destroy)
         self.connect('size-allocate', self.on_languagebar_position)
         for signal_name in self.fcitx_prop_dict.values():
@@ -175,10 +176,11 @@ class LangPanel(Gtk.Window):
         except Exception, e:
             log_traceback(log)
 
-    def on_languagebar_realize(self, widget):
+    def _init_languagebar_position(self):
         try:
-            with open(os.path.join(CONFIG_ROOT, 'gimpanel-state'), 'w+') as f:
+            with open(os.path.join(CONFIG_ROOT, 'gimpanel-state')) as f:
                 size = f.read().strip()
+
             if size:
                 x, y = size.split()
                 self.panel_x, self.panel_y = int(x), int(y)
