@@ -307,13 +307,15 @@ class GimPanel(Gtk.Window):
             log.debug('UpdateProperty: prop name: %s for value: %s' % (prop_name, icon_name))
             self.appindicator.set_property("icon-name", icon_name)
             setattr(self.langpanel, self.langpanel.fcitx_prop_dict[prop_name], value)
+            self.Enable(1)
         else:
             log.warning('UpdateProperty: No handle prop name: %s or is showing popup menu' % prop_name)
 
     @log_func(log)
     def Enable(self, enabled):
+        log.debug("Enable: %s, showing popup: %s, is default: %s" % (enabled, self._showing_popup, self.langpanel.is_default_im()))
         self.update_menu()
-        self.langpanel.visible = enabled or self._showing_popup
+        self.langpanel.visible = (enabled == 1 and not self.langpanel.is_default_im()) or self._showing_popup
         self.langpanel.do_visible_task()
 
     def do_visible_task(self):

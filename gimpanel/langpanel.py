@@ -132,10 +132,8 @@ class LangPanel(Gtk.Window):
         #TODO do not hard code
         try:
             value = self.get_property('im').split(':')[2]
-            if value != 'fcitx-kbd':
-                return True
-            else:
-                return False
+            log.debug("Current IM: %s" % value)
+            return value == 'fcitx-kbd'
         except Exception, e:
             log_traceback(log)
             return True
