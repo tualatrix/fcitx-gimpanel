@@ -7,5 +7,5 @@ Terminal=false
 Type=Application
 Categories=System;Utility;
 StartupNotify=false
-NotShowIn=KDE;
+NotShowIn=GNOME;KDE;
 NoDisplay=true
