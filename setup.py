@@ -6,7 +6,7 @@ setup(name='gimpanel',
       description='A GTK+ front-end for Fcitx',
       author='Tualatrix Chou',  
       author_email='tualatrix@gmail.com',
-      url='http://imtx.com',
+      url='http://imtx.me',
       scripts=['fcitx-gimpanel'],
       packages=find_packages(exclude=['tests']),
       data_files=[
