@@ -1,0 +1,6 @@
+fcitx-gimpanel 0.3.0
+====================
+
+  * Overview of Changes
+    - Add autostart delay for 5 seconds, make sure fcitx is started
+
